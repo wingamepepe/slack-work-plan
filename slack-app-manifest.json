@@ -1,0 +1,63 @@
+{
+  "display_information": {
+    "name": "任务管理器",
+    "description": "一个强大的任务管理工具，帮助团队高效协作",
+    "background_color": "#667eea",
+    "long_description": "任务管理器是一个集成在 Slack 中的强大工具，让你可以直接在 Slack 中创建、编辑和管理任务。支持优先级设置、进度跟踪、时间估算等功能，让团队协作更加高效。"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "任务管理器",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/task",
+        "url": "https://your-domain.com/api/slack-commands",
+        "description": "管理任务 - 创建、查看、编辑任务",
+        "usage_hint": "create | list | dashboard | [任务名称]",
+        "should_escape": false
+      },
+      {
+        "command": "/任务",
+        "url": "https://your-domain.com/api/slack-commands",
+        "description": "任务管理 - 中文命令",
+        "usage_hint": "新建 | 列表 | 仪表板 | [任务名称]",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "commands",
+        "chat:write",
+        "chat:write.public",
+        "users:read",
+        "channels:read",
+        "groups:read",
+        "im:read",
+        "mpim:read"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://your-domain.com/api/slack-events",
+      "bot_events": [
+        "app_mention",
+        "message.channels",
+        "message.groups",
+        "message.im",
+        "message.mpim"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://your-domain.com/api/slack-interactive"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

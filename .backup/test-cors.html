@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨域测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { border-color: #4CAF50; background: #f8fff8; }
+        .error { border-color: #f44336; background: #fff8f8; }
+        .warning { border-color: #ff9800; background: #fffaf0; }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005a87; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 跨域问题测试</h1>
+        <p>这个页面用于测试Slack Webhook的跨域问题是否已解决。</p>
+
+        <div class="test-section">
+            <h3>📡 代理服务器状态检查</h3>
+            <button onclick="testProxy()">测试代理服务器</button>
+            <div id="proxy-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Slack Webhook测试</h3>
+            <input type="url" id="webhook-url" placeholder="输入你的Slack Webhook URL" style="width: 100%; padding: 8px; margin: 10px 0;">
+            <br>
+            <button onclick="testSlackDirect()">直接发送（可能失败）</button>
+            <button onclick="testSlackProxy()">通过代理发送</button>
+            <div id="slack-result" class="result"></div>
+        </div>
+
+        <div class="test-section warning">
+            <h3>⚠️ 注意事项</h3>
+            <ul>
+                <li>确保服务器正在运行：<code>node server.js</code></li>
+                <li>或者使用一键启动脚本：<code>npm start</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function testProxy() {
+            const resultDiv = document.getElementById('proxy-result');
+            resultDiv.textContent = '正在测试代理服务器...';
+            
+            try {
+                const response = await fetch('/slack-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        webhookUrl: 'https://hooks.slack.com/services/test',
+                        payload: { text: '测试消息' }
+                    })
+                });
+                
+                const result = await response.json();
+                resultDiv.textContent = `✅ 代理服务器正常运行\n响应: ${JSON.stringify(result, null, 2)}`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.textContent = `❌ 代理服务器连接失败: ${error.message}\n请确保运行: node server.js`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testSlackDirect() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            const resultDiv = document.getElementById('slack-result');
+            
+            if (!webhookUrl) {
+                resultDiv.textContent = '❌ 请输入Slack Webhook URL';
+                return;
+            }
+            
+            resultDiv.textContent = '正在直接发送到Slack...';
+            
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: '🔧 跨域测试消息 - 直接发送'
+                    })
+                });
+                
+                if (response.ok) {
+                    resultDiv.textContent = '✅ 直接发送成功！（意外的结果）';
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.textContent = `❌ 直接发送失败: HTTP ${response.status}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 直接发送失败（预期结果）: ${error.message}\n这是正常的跨域限制。`;
+                resultDiv.parentElement.className = 'test-section warning';
+            }
+        }
+
+        async function testSlackProxy() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            const resultDiv = document.getElementById('slack-result');
+            
+            if (!webhookUrl) {
+                resultDiv.textContent = '❌ 请输入Slack Webhook URL';
+                return;
+            }
+            
+            resultDiv.textContent = '正在通过代理发送到Slack...';
+            
+            try {
+                const response = await fetch('/slack-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        webhookUrl: webhookUrl,
+                        payload: {
+                            text: '🎉 跨域测试消息 - 通过代理发送成功！'
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.textContent = `✅ 通过代理发送成功！\n响应: ${JSON.stringify(result, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.textContent = `❌ 发送失败: ${result.error}\n响应: ${JSON.stringify(result, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 代理发送失败: ${error.message}\n请确保服务器正在运行。`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // 页面加载时自动测试代理服务器
+        window.addEventListener('load', () => {
+            setTimeout(testProxy, 1000);
+        });
+    </script>
+</body>
+</html> 

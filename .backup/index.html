@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Slack 工作计划生成器</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>📋 Slack 工作计划生成器</h1>
+                <p>创建漂亮的工作计划消息，一键分享到Slack</p>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="btn btn-secondary" title="切换主题">
+                        🌙
+                    </button>
+                    <button id="settings-btn" class="btn btn-secondary" title="设置">
+                        ⚙️
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 左侧：任务管理 -->
+            <section class="tasks-section">
+                <div class="section-header">
+                    <h2>📝 今日任务</h2>
+                    <div class="task-stats">
+                        <span id="task-count">0 个任务</span>
+                        <span id="total-time">总计: 0小时</span>
+                    </div>
+                </div>
+
+                <!-- 工作计划设置 -->
+                <div class="plan-settings">
+                    <div class="form-row">
+                        <label for="start-time">🕐 开始时间:</label>
+                        <input type="time" id="start-time" value="09:00">
+                        <button id="reset-start-time" class="btn btn-secondary btn-small" title="重置为上班时间">重置</button>
+                    </div>
+                </div>
+
+                <!-- 添加任务表单 -->
+                <div class="add-task-form">
+                    <div class="form-row">
+                        <input type="text" id="task-name" placeholder="输入任务名称..." maxlength="100">
+                        <input type="number" id="task-duration" placeholder="时长(小时)" min="0.5" max="24" step="0.5" value="1">
+                    </div>
+                    <div class="form-row">
+                        <select id="task-priority">
+                            <option value="high">🔴 高优先级</option>
+                            <option value="medium" selected>🟡 中优先级</option>
+                            <option value="low">🟢 低优先级</option>
+                        </select>
+                        <button id="add-task-btn" class="btn btn-primary">➕ 添加任务</button>
+                    </div>
+                    <textarea id="task-notes" placeholder="备注 (可选)" rows="2"></textarea>
+                </div>
+
+                <!-- 任务列表 -->
+                <div class="tasks-container">
+                    <div id="tasks-list" class="tasks-list">
+                        <!-- 任务项将通过JavaScript动态添加 -->
+                    </div>
+                    <div id="empty-state" class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h3>还没有任务</h3>
+                        <p>添加你的第一个工作任务开始规划今天的工作吧！</p>
+                    </div>
+                </div>
+
+                <!-- 快速操作 -->
+                <div class="quick-actions">
+                    <button id="clear-all-btn" class="btn btn-danger">🗑️ 清空所有</button>
+                    <button id="export-btn" class="btn btn-secondary">💾 导出数据</button>
+                    <button id="import-btn" class="btn btn-secondary">📁 导入数据</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </section>
+
+            <!-- 右侧：预览和输出 -->
+            <section class="preview-section">
+                <div class="section-header">
+                    <h2>👀 Slack 预览</h2>
+                    <div class="preview-controls">
+                        <select id="output-format">
+                            <option value="blocks">Block Kit</option>
+                            <option value="slack" selected>Slack格式 (推荐)</option>
+                            <option value="mrkdwn">Markdown</option>
+                            <option value="plain">纯文本</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Slack消息预览 -->
+                <div class="slack-preview">
+                    <div class="slack-message">
+                        <div class="slack-avatar">👤</div>
+                        <div class="slack-content">
+                            <div class="slack-header">
+                                <span class="slack-username">工作助手</span>
+                                <span class="slack-time">刚刚</span>
+                            </div>
+                            <div id="slack-message-content" class="slack-message-body">
+                                <!-- 预览内容将通过JavaScript生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输出代码 -->
+                <div class="output-section">
+                    <div class="output-header">
+                        <h3>📋 输出代码</h3>
+                        <button id="copy-btn" class="btn btn-primary">📋 复制</button>
+                    </div>
+                    <textarea id="output-code" readonly placeholder="添加任务后这里会显示格式化代码..."></textarea>
+                </div>
+
+                <!-- Slack发送 -->
+                <div class="slack-send-section">
+                    <h3>🚀 发送到Slack</h3>
+                    <div class="webhook-config">
+                        <input type="url" id="webhook-url" placeholder="输入Slack Webhook URL...">
+                        <button id="test-webhook-btn" class="btn btn-secondary">🔍 测试连接</button>
+                        <button id="send-btn" class="btn btn-success">📤 发送</button>
+                    </div>
+                    <p class="webhook-help">
+                        <a href="https://api.slack.com/messaging/webhooks" target="_blank">
+                            如何获取Webhook URL？
+                        </a>
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <!-- 设置模态框 -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>⚙️ 设置</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>默认工作时长 (小时)</label>
+                        <input type="number" id="default-duration" min="0.5" max="8" step="0.5" value="1">
+                    </div>
+                    <div class="setting-group">
+                        <label>默认上班时间</label>
+                        <input type="time" id="default-start-time" value="09:00">
+                    </div>
+                    <div class="setting-group">
+                        <label>时间格式</label>
+                        <select id="time-format">
+                            <option value="decimal">小数 (1.5小时)</option>
+                            <option value="minutes">分钟 (90分钟)</option>
+                            <option value="mixed">混合 (1小时30分钟)</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>自动保存</label>
+                        <input type="checkbox" id="auto-save" checked>
+                        <span>自动保存到本地存储</span>
+                    </div>
+                    <div class="setting-group">
+                        <label>Webhook URL</label>
+                        <input type="url" id="settings-webhook" placeholder="保存常用的Webhook URL">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-settings" class="btn btn-primary">保存设置</button>
+                    <button class="modal-close btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知提示 -->
+        <div id="notification" class="notification">
+            <span id="notification-text"></span>
+            <button id="notification-close">&times;</button>
+        </div>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="utils.js"></script>
+    <script src="preview.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
